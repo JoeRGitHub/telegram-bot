@@ -34,7 +34,23 @@ def get_repos(update, username):
 
 def get_top_10_repos(update, context):
     # TODO: Get the top 10 repositores in github via api calls to github api
-    pass
+    url = "https://api.github.com/search/repositories"
+    params = {
+        "q": "stars:>0",
+        "sort": "stars",
+        "order": "desc",
+        "per_page": 10
+    }
+
+    response = requests.get(url, params=params)
+    data = response.json()
+    # print(data.keys())
+    # print(type(data['items']))
+    list_repos = []
+    for i, x in enumerate(data['items'], 1):
+        list_repos.append(f"{i}. {x['full_name']}, {x['stargazers_count']}")
+    str_repos = ' \n'.join(list_repos)
+    update.message.reply_text(f'Top 10 repositores in github:\n{str_repos}')
 
 # 3. Add a commad to get how many branches a repo has via api calls to github api
 
@@ -78,6 +94,7 @@ def main():
 
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("get_repos", get_repos))
+    dp.add_handler(CommandHandler("get_top_10_repos", get_top_10_repos))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
     updater.start_polling()

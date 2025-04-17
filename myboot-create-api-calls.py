@@ -14,10 +14,20 @@ def echo(update, context):
 # Exercise 1: Get the repositores of a user in github via api calls to github api
 
 
-def get_repos(update, context, username):
-    response = requests.get("https://api.github.com/users/dor-amar/repos")
-    data = response.json()
-    print(data)
+def get_repos(update, username):
+    args = username.args
+    print(args[0])
+    response = requests.get(f"https://api.github.com/users/{args[0]}/repos")
+    repos = response.json()
+    print(response.status_code)
+    # update.message.reply_text(f"You sent: {repos[0]['name']}")
+    list_repos = []
+    for repo in repos:
+        list_repos.append(repo['name'])
+    # print(list_repos)
+    str_repos = '# ' + '\n# '.join(list_repos)
+    update.message.reply_text(f'List of {args[0]} repositories: \n{str_repos}')
+
 
 # 2. Add a command to get the top 10 repositores in github via api calls to github api
 
@@ -67,7 +77,7 @@ def main():
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("username", get_repos))
+    dp.add_handler(CommandHandler("get_repos", get_repos))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
     updater.start_polling()

@@ -11,23 +11,38 @@ def start(update, context):
 def echo(update, context):
     update.message.reply_text(f"You said: {update.message.text}")
 
+
+def help(update, context):
+    update.message.reply_text(
+        f"1. For a list of git owner repositories use '/get_repos' flowing Git owne's name.\n"
+        f"2. For top 10 repositories in GitHub use /get_top_10_repos.\n"
+        f"3. For a list of GitHub branches, use /get_branches flowing owner and repo name.\n"
+        f"4. TBD"
+    )
+
 # Exercise 1: Get the repositores of a user in github via api calls to github api
 
 
-def get_repos(update, username):
-    args = username.args
-    print(args[0])
-    response = requests.get(f"https://api.github.com/users/{args[0]}/repos")
-    repos = response.json()
-    print(response.status_code)
-    # update.message.reply_text(f"You sent: {repos[0]['name']}")
-    list_repos = []
-    for repo in repos:
-        list_repos.append(repo['name'])
-    # print(list_repos)
-    str_repos = '# ' + '\n# '.join(list_repos)
-    update.message.reply_text(f'List of {args[0]} repositories: \n{str_repos}')
-
+def get_repos(update, context):
+    try:
+        args = context.args
+        print(args[0])
+        response = requests.get(
+            f"https://api.github.com/users/{args[0]}/repos")
+        repos = response.json()
+        print(response.status_code)
+        # update.message.reply_text(f"You sent: {repos[0]['name']}")
+        list_repos = []
+        for repo in repos:
+            list_repos.append(repo['name'])
+        # print(list_repos)
+        str_repos = '# ' + '\n# '.join(list_repos)
+        update.message.reply_text(
+            f'List of {args[0]} repositories: \n{str_repos}')
+    except Exception as e:
+        update.message.reply_text(
+            "Check the data you entered and try again.")
+        print(e)
 
 # 2. Add a command to get the top 10 repositores in github via api calls to github api
 
@@ -54,10 +69,40 @@ def get_top_10_repos(update, context):
 
 # 3. Add a commad to get how many branches a repo has via api calls to github api
 
+# owner='non', repo_name='non'
 
-def get_branches(update, context, repo_name):
-    # TODO: Get how many branches a repo has via api calls to github api
-    pass
+
+def get_branches(update, context):
+    args = context.args
+
+    try:
+        owner = args[0]
+        repo_name = args[1]
+        print(owner)
+        print(repo_name)
+        # owner = input("Enter owner name: ")
+        # repo_name = input("Enter repo name: ")
+        url = f"https://api.github.com/repos/{owner}/{repo_name}/branches"
+        response = requests.get(url)
+        data = response.json()
+        status = response.status_code
+        print(status)
+
+        if status == 200:
+            list_count = []
+            for i in data:
+                list_count.append(i['name'])
+            str_branches = ', '.join(list_count)
+
+            update.message.reply_text(
+                f'Owner {owner} in {repo_name} repo, has {len(list_count)} branches.\nBranches list name: {str_branches}.')
+        else:
+            update.message.reply_text(
+                "Check the data you entered and try again.\n{OWNER-NAME} {REPO-NAME}.")
+    except Exception as e:
+        update.message.reply_text(
+            "Check the data you entered and try again.\n{OWNER-NAME} {REPO-NAME}.")
+        print(e)
 
 # 4. Check if a GitHub repo has open issues and how many.
 
@@ -93,8 +138,10 @@ def main():
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("get_repos", get_repos))
     dp.add_handler(CommandHandler("get_top_10_repos", get_top_10_repos))
+    dp.add_handler(CommandHandler("get_branches", get_branches))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
     updater.start_polling()
